@@ -97,9 +97,11 @@ int setPWMDuty16bit(TIM_HandleTypeDef *tim, uint8_t channel, uint16_t duty)
     
     default:
         Error_Handler();
+        return 1;
     }
 
     __HAL_TIM_SET_COMPARE(tim, tim_channel, pulse);
+    return 0;
 }
 
 uint16_t power(uint16_t base, uint16_t exp){
@@ -112,7 +114,7 @@ uint16_t power(uint16_t base, uint16_t exp){
 
 int sortUART_RXData(const char *unsorted_array, char *header, char *sorted_array){
     // Buat pointer yang menunjuk ke elemen pertama header (i)
-    uint8_t *id = strstr(unsorted_array, header);
+    char *id = strstr(unsorted_array, header);
     // Cek jika pointer NULL -> header tidak ditemukan
     if (id == NULL){
         return -1;
@@ -120,7 +122,7 @@ int sortUART_RXData(const char *unsorted_array, char *header, char *sorted_array
     uint8_t len = sizeof(unsorted_array);
     for (size_t i = 0; i < len; i++, id++){
         // Handel overflow
-        if (id >= (uint8_t *)(unsorted_array+len)) 
+        if (id >= (char *)(unsorted_array+len)) 
             id -= len; 
         sorted_array[i] = *id;
     }

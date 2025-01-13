@@ -15,10 +15,12 @@
 #define IRIS_STM_UTILS_H
 
 #include "main.h"
-#include "core_cm3.h"
+// #include "core_cm3.h"
 
 #include <stdio.h>
 #include <stdint.h>
+#include <stdlib.h>
+#include <string.h>
 
 /**
  * @brief Structure representing a ring buffer.
