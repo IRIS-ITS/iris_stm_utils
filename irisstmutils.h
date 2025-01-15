@@ -138,9 +138,10 @@ int setPWMDuty16bit(TIM_HandleTypeDef *tim, uint8_t channel, uint16_t duty);
  * @param unsorted_array Pointer to the unsorted input array.
  * @param header Pointer to store header characters.
  * @param sorted_array Pointer to store sorted output array.
+ * @param data_len Length of data.
  * @return 0 on success, -1 on failure.
  */
-int sortUART_RXData(const char *unsorted_array, char *header, char *sorted_array);
+int sortUART_RXData(const uint8_t *unsorted_array, const char *header, uint8_t *sorted_array, size_t data_len);
 
 // /**
 //  * @brief Process 8-bit buttons state from a list of button names.

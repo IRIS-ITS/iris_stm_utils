@@ -112,20 +112,33 @@ uint16_t power(uint16_t base, uint16_t exp){
     }
 }
 
-int sortUART_RXData(const char *unsorted_array, char *header, char *sorted_array){
-    // Buat pointer yang menunjuk ke elemen pertama header (i)
-    char *id = strstr(unsorted_array, header);
-    // Cek jika pointer NULL -> header tidak ditemukan
-    if (id == NULL){
+int sortUART_RXData(const uint8_t *unsorted_array, const char *header, uint8_t *sorted_array, size_t data_len) {
+    if (unsorted_array == NULL || header == NULL || sorted_array == NULL) {
         return -1;
-    } // Urutkan data JIKA DAN HANYA JIKA header ditemukan
-    uint8_t len = sizeof(unsorted_array);
-    for (size_t i = 0; i < len; i++, id++){
-        // Handel overflow
-        if (id >= (char *)(unsorted_array+len)) 
-            id -= len; 
-        sorted_array[i] = *id;
     }
+    
+    size_t header_len = strlen(header);
+    if (header_len == 0) return -1;
+    
+    // Search for header using memcmp
+    int header_pos = -1;
+    for (size_t i = 0; i <= data_len - header_len; i++) {
+        if (memcmp(unsorted_array + i, header, header_len) == 0) {
+            header_pos = i;
+            break;
+        }
+    }
+    
+    if (header_pos == -1) {
+        return -1;
+    }
+    
+    size_t start_pos = header_pos;
+    for (size_t i = 0; i < data_len; i++) {
+        size_t pos = (start_pos + i) % data_len;
+        sorted_array[i] = unsorted_array[pos];
+    }
+    
     return 0;
 }
 
