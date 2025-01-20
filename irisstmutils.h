@@ -33,6 +33,18 @@ typedef struct {
 } RingBuffer;
 
 /**
+ * @brief Enum representing the status of the UART RX data.
+ */
+typedef enum UART_RxDataStatus
+{
+  VALID = 200,
+  HEADER_MISMATCH = 300,
+  DATA_INVALID = 400,
+  DATA_INPUT_NULL = 401,
+  HEADER_INPUT_NULL = 402
+}UART_RxDataStatus;
+
+/**
  * @brief Get the number of milliseconds since the system started.
  * 
  * @return Number of milliseconds since the system started.
@@ -141,7 +153,7 @@ int setPWMDuty16bit(TIM_HandleTypeDef *tim, uint8_t channel, uint16_t duty);
  * @param data_len Length of data.
  * @return 0 on success, -1 on failure.
  */
-int sortUART_RXData(const uint8_t *unsorted_array, const char *header, uint8_t *sorted_array, size_t data_len);
+UART_RxDataStatus processUART_RxData(const uint8_t *unsorted_array, const char *header, uint8_t *sorted_array, size_t data_len);
 
 // /**
 //  * @brief Process 8-bit buttons state from a list of button names.

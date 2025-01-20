@@ -112,13 +112,13 @@ uint16_t power(uint16_t base, uint16_t exp){
     }
 }
 
-int sortUART_RXData(const uint8_t *unsorted_array, const char *header, uint8_t *sorted_array, size_t data_len) {
+UART_RxDataStatus processUART_RxData(const uint8_t *unsorted_array, const char *header, uint8_t *sorted_array, size_t data_len) {
     if (unsorted_array == NULL || header == NULL || sorted_array == NULL) {
-        return -1;
+        return DATA_INPUT_NULL;
     }
     
     size_t header_len = strlen(header);
-    if (header_len == 0) return -1;
+    if (header_len == 0) return HEADER_INPUT_NULL;
     
     // Search for header using memcmp
     int header_pos = -1;
@@ -130,7 +130,7 @@ int sortUART_RXData(const uint8_t *unsorted_array, const char *header, uint8_t *
     }
     
     if (header_pos == -1) {
-        return -1;
+        return HEADER_MISMATCH;
     }
     
     size_t start_pos = header_pos;
@@ -139,7 +139,10 @@ int sortUART_RXData(const uint8_t *unsorted_array, const char *header, uint8_t *
         sorted_array[i] = unsorted_array[pos];
     }
     
-    return 0;
+    if (sorted_array[0] != header[0] || sorted_array[1] != header[1] || sorted_array[2] != header[2] || sorted_array[data_len - 1] != 1) {
+        return DATA_INVALID;
+    }
+    return VALID;
 }
 
 // uint8_t processButton8bit(char btn_list[8][3]){
