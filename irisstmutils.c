@@ -120,15 +120,50 @@ UART_RxDataStatus processUART_RxData(const uint8_t *unsorted_array, const char *
     size_t header_len = strlen(header);
     if (header_len == 0) return HEADER_INPUT_NULL;
     
-    // Search for header using memcmp
-    int header_pos = -1;
-    for (size_t i = 0; i <= data_len - header_len; i++) {
-        if (memcmp(unsorted_array + i, header, header_len) == 0) {
-            header_pos = i;
-            break;
+    // Search for header using KMP algorithm
+    int8_t header_pos = -1;
+    int lps[header_len];
+    
+    // Preprocess the pattern (calculate lps array)
+    int len = 0;
+    lps[0] = 0; // lps[0] is always 0
+    int i = 1;
+    while (i < header_len) {
+        if (header[i] == header[len]) {
+            len++;
+            lps[i] = len;
+            i++;
+        } else {
+            if (len != 0) {
+                len = lps[len - 1];
+            } else {
+                lps[i] = 0;
+                i++;
+            }
         }
     }
     
+    // Search for the header in the unsorted_array
+    i = 0; // index for unsorted_array
+    int j = 0; // index for header
+    while (i < data_len) {
+        if (header[j] == unsorted_array[i]) {
+            i++;
+            j++;
+        }
+        
+        if (j == header_len) {
+            header_pos = i - j;
+            break;
+        } else if (i < data_len && header[j] != unsorted_array[i]) {
+            if (j != 0) {
+                j = lps[j - 1];
+            } else {
+                i++;
+            }
+        }
+    }
+
     if (header_pos == -1) {
         return HEADER_MISMATCH;
     }
