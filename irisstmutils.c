@@ -120,13 +120,13 @@ UART_RxDataStatus processUART_RxData(const uint8_t *unsorted_array, const char *
     size_t header_len = strlen(header);
     if (header_len == 0) return HEADER_INPUT_NULL;
     
-    // Search for header using KMP algorithm
+    // Search for header using modified KMP algorithm
     int8_t header_pos = -1;
     int lps[header_len];
     
     // Preprocess the pattern (calculate lps array)
     int len = 0;
-    lps[0] = 0; // lps[0] is always 0
+    lps[0] = 0;
     int i = 1;
     while (i < header_len) {
         if (header[i] == header[len]) {
@@ -143,24 +143,31 @@ UART_RxDataStatus processUART_RxData(const uint8_t *unsorted_array, const char *
         }
     }
     
-    // Search for the header in the unsorted_array
-    i = 0; // index for unsorted_array
-    int j = 0; // index for header
-    while (i < data_len) {
-        if (header[j] == unsorted_array[i]) {
-            i++;
-            j++;
-        }
+    // Search for the header in the unsorted_array, checking twice the length to handle wrap-around
+    i = 0;
+    int j = 0;
+    int search_len = data_len * 2;
+    while (i < search_len) {
+        // Use modulo to wrap around the array
+        uint8_t current_char = unsorted_array[i % data_len];
         
-        if (j == header_len) {
-            header_pos = i - j;
-            break;
-        } else if (i < data_len && header[j] != unsorted_array[i]) {
-            if (j != 0) {
-                j = lps[j - 1];
-            } else {
-                i++;
+        if (header[j] == current_char) {
+            if (j == 0) {
+                // Record potential start of header
+                header_pos = i % data_len;
             }
+            j++;
+            i++;
+            
+            if (j == header_len) {
+                // Verified full header match
+                break;
+            }
+        } else {
+            // Reset search if mismatch occurs
+            i = i - j + 1;
+            j = 0;
+            header_pos = -1;
         }
     }
 
@@ -168,9 +175,9 @@ UART_RxDataStatus processUART_RxData(const uint8_t *unsorted_array, const char *
         return HEADER_MISMATCH;
     }
     
-    size_t start_pos = header_pos;
+    // Copy data starting from header position
     for (size_t i = 0; i < data_len; i++) {
-        size_t pos = (start_pos + i) % data_len;
+        size_t pos = (header_pos + i) % data_len;
         sorted_array[i] = unsorted_array[pos];
     }
     
