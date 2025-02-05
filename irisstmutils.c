@@ -119,71 +119,43 @@ UART_RxDataStatus processUART_RxData(const uint8_t *unsorted_array, const char *
     
     size_t header_len = strlen(header);
     if (header_len == 0) return HEADER_INPUT_NULL;
-    
-    // Search for header using modified KMP algorithm
+    if (data_len < header_len + 1) return DATA_INVALID;
+
+    // Search for header in the circular buffer
     int8_t header_pos = -1;
-    int lps[header_len];
-    
-    // Preprocess the pattern (calculate lps array)
-    int len = 0;
-    lps[0] = 0;
-    int i = 1;
-    while (i < header_len) {
-        if (header[i] == header[len]) {
-            len++;
-            lps[i] = len;
-            i++;
-        } else {
-            if (len != 0) {
-                len = lps[len - 1];
-            } else {
-                lps[i] = 0;
-                i++;
-            }
-        }
-    }
-    
-    // Search for the header in the unsorted_array, checking twice the length to handle wrap-around
-    i = 0;
-    int j = 0;
-    int search_len = data_len * 2;
-    while (i < search_len) {
-        // Use modulo to wrap around the array
-        uint8_t current_char = unsorted_array[i % data_len];
-        
-        if (header[j] == current_char) {
-            if (j == 0) {
-                // Record potential start of header
-                header_pos = i % data_len;
-            }
-            j++;
-            i++;
-            
-            if (j == header_len) {
-                // Verified full header match
+    for (size_t i = 0; i < data_len; i++) {
+        size_t match = 1;
+        for (size_t j = 0; j < header_len; j++) {
+            if (unsorted_array[(i + j) % data_len] != header[j]) {
+                match = 0;
                 break;
             }
-        } else {
-            // Reset search if mismatch occurs
-            i = i - j + 1;
-            j = 0;
-            header_pos = -1;
+        }
+        if (match) {
+            header_pos = i;
+            break;
         }
     }
 
     if (header_pos == -1) {
         return HEADER_MISMATCH;
     }
-    
+
     // Copy data starting from header position
     for (size_t i = 0; i < data_len; i++) {
-        size_t pos = (header_pos + i) % data_len;
-        sorted_array[i] = unsorted_array[pos];
+        sorted_array[i] = unsorted_array[(header_pos + i) % data_len];
     }
-    
-    if (sorted_array[0] != header[0] || sorted_array[1] != header[1] || sorted_array[2] != header[2] || sorted_array[data_len - 1] != 1) {
+
+    // Verify header and terminating byte
+    for (size_t i = 0; i < header_len; i++) {
+        if (sorted_array[i] != header[i]) {
+            return DATA_INVALID;
+        }
+    }
+    if (sorted_array[data_len - 1] != 1) {
         return DATA_INVALID;
     }
+
     return VALID;
 }
 
